@@ -1,6 +1,13 @@
 ## AttMOMO - Attributable Mortality Model
 
-Estimate number of deaths attributable to one or more pathogens, adjusted for excess temparatures.
+Estimate number of deaths attributable to one or more pathogens, adjusted for excess temperatures.
+
+# AttMOMO as R-package
+As of 2021.03.05 AttMOMO has been available as a R-package.
+
+```{r eval = FALSE}
+devtools::install_github("JensXII/AttMOMO")
+```
 
 # AttMOMO
 Wrapper for AttMOMO_estimation  
