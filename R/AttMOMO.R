@@ -24,9 +24,9 @@ AttMOMO <- function(country, wdir, StartWeek, EndWeek, groups, pooled = NULL, in
 read.table <- write.table <- quasipoisson <- df.residuals <- predict.glm <- residuals <- NULL
 
   # country <- "Denmark"
-  # wdir <- "H:/SFSD/INFEPI/Projekter/AKTIVE/MOMO/AttMOMO/Denmark"
-  # StartWeek <- '2014-W27'
-  # EndWeek <- '2020-W22'
+  # wdir = "H:/SFSD/INFEPI/Projekter/AKTIVE/MOMO/AttMOMO/AttMOMO_DK"
+  # StartWeek <- '2016-W27'
+  # EndWeek <- '2021-W26'
   # groups = c('00to14', '15to44', '45to64', '65to74', '75to84', '85P', 'Total')
   # pooled <- c('00to14', '15to44', '45to64', '65to74', '75to84', '85P')
   # indicators <- c('GSIPLS', 'GSCLS')

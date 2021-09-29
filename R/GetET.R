@@ -10,7 +10,6 @@
 #' @export
 GetET <- function(ET, StartWeek, EndWeek, tvar) {
   . <- temp <- pop3 <- NUTS3 <- pop3.sum <- wk <- ptemp <- ptmin <- ptmax <- predict <- glm <-read.table <- write.table <- ..cols <- NULL
-  library(data.table)
 
   # source("C:/Users/NLS/Documents/GitHub/EuroMOMOnetwork/AttMOMO/R/GetWdata.R")
   # ET <- GetWdata('C:/Users/NLS/Bat_Files/wdata', 'DK')
@@ -18,7 +17,7 @@ GetET <- function(ET, StartWeek, EndWeek, tvar) {
   # EndWeek <- '2020-W22'
   # tvar <- "mintemp"
 
-  ET <- data.table(ET)
+  data.table::setDT(ET)
   # keep relevant colums
   cols <- c("date", "pop3", "NUTS3", tvar)
   ET <- ET[, ..cols]
@@ -27,7 +26,7 @@ GetET <- function(ET, StartWeek, EndWeek, tvar) {
   setnames(ET, old = tvar, new = "temp")
 
   # time span
-  ET <- merge(data.table(date = as.character(seq(as.Date(ISOweek::ISOweek2date(paste0(StartWeek, "-1"))),
+  ET <- merge(data.table::data.table(date = as.character(seq(as.Date(ISOweek::ISOweek2date(paste0(StartWeek, "-1"))),
                                                  as.Date(ISOweek::ISOweek2date(paste0(EndWeek, "-7"))), by = 'day'))),
               ET, by = 'date', all.x = TRUE)
 

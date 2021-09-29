@@ -8,13 +8,12 @@
 #' @export
 GetWdata <- function(dir, CountryCode, NUTS = NULL) {
   NUTS3 <- read.table <- NULL
-  library(data.table)
 
   if (is.null(NUTS)) {NUTS <- CountryCode}
   if (min(substr(NUTS,1,2) == CountryCode) == 0) {
     stop(paste("Two first characters in NUTS !=", CountryCode))
   }
-  wdata <- try(data.table(read.table(paste0(dir, "/wdata_", CountryCode, ".txt"),
+  wdata <- try(data.table::data.table(read.table(paste0(dir, "/wdata_", CountryCode, ".txt"),
                                      header = TRUE, sep = ";", dec = ".", as.is = TRUE))
                [(substr(NUTS3, 1 , max(nchar(NUTS))) %in% NUTS), c("date", "pop3", "NUTS3", "temp", "mintemp", "maxtemp")])
   if (inherits(wdata, "try-error")) {

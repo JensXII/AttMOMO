@@ -20,11 +20,10 @@
 AttMOMO_estimation <- function(country, StartWeek, EndWeek, groups, pooled = NULL, indicators, death_data, ET_data,
                                lags = 3, ptrend = 0.05, p26 = 0.05, p52 = 0.10) {
   group <- ET <- summer <- winter <- EB <- EAB <- season <- deaths <- VEB <- EET <- VEET <- VEAB <- wk <- . <- anova <- glm <- median <- residuals <- df.residual <- predict.glm <- quasipoisson <- NULL
-  library(data.table)
 
   # country <- "Denmark"
-  # StartWeek <- '2014-W27'
-  # EndWeek <- '2020-W22'
+  # StartWeek <- '2016-W27'
+  # EndWeek <- '2021-W26'
   # groups = c('00to14', '15to44', '45to64', '65to74', '75to84', '85P', 'Total')
   # pooled <- c('00to14', '15to44', '45to64', '65to74', '75to84', '85P')
   # indicators <- c('GSIPLS', 'GSCLS')
@@ -35,10 +34,9 @@ AttMOMO_estimation <- function(country, StartWeek, EndWeek, groups, pooled = NUL
   # p26 <- 0.05
   # p52 <- 0.10
 
-
   # Read and merge data -----------------------------------------------------
   # death data
-  AttData <- data.table(death_data)
+  AttData <- data.table::data.table(death_data)
   if (sum(colnames(AttData) %in% c('group', 'ISOweek', 'deaths')) != 3) {
     stop('Columns group, ISOweek, deaths not in deaths_date')
   }
@@ -54,7 +52,7 @@ AttMOMO_estimation <- function(country, StartWeek, EndWeek, groups, pooled = NUL
   AttData <- AttData[order(group, ISOweek),]
 
   # Extreme temperature data
-  ET_data <- data.table(ET_data)
+  ET_data <- data.table::data.table(ET_data)
   if (sum(colnames(ET_data) %in% c('ISOweek', 'ET')) != 2) {
     stop('Columns ISOweek, deaths not in ET_date')
   }
@@ -65,7 +63,7 @@ AttMOMO_estimation <- function(country, StartWeek, EndWeek, groups, pooled = NUL
 
   # Indicator data
   for (i in indicators) {
-    X <- try(data.table(eval(parse(text = paste0(i, '_data')))))
+    X <- try(data.table::data.table(eval(parse(text = paste0(i, '_data')))))
     if (inherits(X, "try-error")) {
       stop(paste0("Could not read ", i, "_data"))
     }

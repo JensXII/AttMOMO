@@ -9,7 +9,6 @@
 #' @export
 GetMOMOdata <- function(indir, filename, outdir = NULL, outfile = TRUE) {
   group <- YoDi <- WoDi <- nbc <- . <- nb <- read.table <- write.table <- NULL
-  library(data.table)
 
   # indir <- 'H:/SFSD/INFEPI/Projekter/AKTIVE/MOMO/DK-MOMO/MOMOv4-3-Denmark-2020-22/EUROMOMO-COMPLETE-Denmark-2020-22'
   # filename <- 'EUROMOMOv4-3-COMPLETE-Denmark-2020-22.txt'
@@ -17,7 +16,7 @@ GetMOMOdata <- function(indir, filename, outdir = NULL, outfile = TRUE) {
   # outfile = TRUE
 
   if (is.null(outdir)) { outdir <- indir}
-  deaths <- try(data.table(read.table(paste0(indir,"/", filename), sep = ",", dec = ".", header = TRUE)[ ,c("group", "YoDi", "WoDi", "nb", "nbc")]))
+  deaths <- try(data.table::data.table(read.table(paste0(indir,"/", filename), sep = ",", dec = ".", header = TRUE)[ ,c("group", "YoDi", "WoDi", "nb", "nbc")]))
   if (inherits(deaths, "try-error")) {
     stop(paste0("Error: ", indir, "/", filename))
   }

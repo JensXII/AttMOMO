@@ -4,8 +4,11 @@ Estimate number of deaths attributable to one or more pathogens, adjusted for ex
 
 https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2021.26.8.2001646
 
-# AttMOMO as R-package
-As of 2021.03.05 AttMOMO has been available as a R-package.
+# AttMOMO 2021.09.29
+Removed library-statements.
+
+# AttMOMO 2021.03.05
+AttMOMO available as a R-package.
 
 ```{r eval = FALSE}
 devtools::install_github("JensXII/AttMOMO")
