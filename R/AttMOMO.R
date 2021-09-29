@@ -69,8 +69,7 @@ read.table <- write.table <- quasipoisson <- df.residuals <- predict.glm <- resi
     if (inherits(X, "try-error")) {
       stop(paste0("Could not read  ", indir, "/", i, "_data.txt"))
     }
-    # assign(paste0(i, '_data'), X, envir = .GlobalEnv)
-    assign(paste0(i, '_data'), X)
+    assign(paste0(i, '_data'), X, envir = .GlobalEnv)
   }
 
   # source('R/AttMOMO_estimation.R')
