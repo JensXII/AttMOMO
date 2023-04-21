@@ -4,6 +4,10 @@ Estimate number of deaths attributable to one or more pathogens, adjusted for ex
 
 https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2021.26.8.2001646
 
+# AttMOMO 2023.04.11
+Included parameter with cut-weeks for each indicator.
+Two new funcions: AttMOMOCut and AttMOMO_estimationCut
+
 # AttMOMO 2021.09.29
 Removed library-statements.
 
@@ -28,11 +32,13 @@ Return estimates as a ;-separated .txt file in /output
 AttData <- AttMOMO_estimation(
   country <- "Denmark"
   wdir <- "H:/SFSD/INFEPI/Projekter/AKTIVE/MOMO/AttMOMO/Denmark"
-  StartWeek <- '2014-W27'
-  EndWeek <- '2020-W22'
+  StartWeek <- '2017-W38'
+  EndWeek <- '2023-W12'
   groups = c('00to14', '15to44', '45to64', '65to74', '75to84', '85P', 'Total')
   pooled <- c('00to14', '15to44', '45to64', '65to74', '75to84', '85P')
   indicators <- c('GSIPLS', 'GSCLS')
+  indicatorCuts <- list(`GSIPLS` = c("2020-W01", "2021-W27", "2022-W27"),
+                        `GSCLS` = c("2020-W01", "2021-W27", "2022-W27"))
   lags <- 3
   ptrend <- 0.05
   p26 <- 0.05

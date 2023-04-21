@@ -9,7 +9,7 @@
 #' @return data.table with ISOweek and ET (excess temperature)
 #' @export
 GetET <- function(ET, StartWeek, EndWeek, tvar) {
-  . <- temp <- pop3 <- NUTS3 <- pop3.sum <- wk <- ptemp <- ptmin <- ptmax <- predict <- glm <-read.table <- write.table <- ..cols <- NULL
+  . <- temp <- pop3 <- NUTS3 <- pop3.sum <- wk <- ptemp <- ptmin <- ptmax <- predict <- glm <- read.table <- write.table <- ..cols <- NULL
 
   # source("C:/Users/NLS/Documents/GitHub/EuroMOMOnetwork/AttMOMO/R/GetWdata.R")
   # ET <- GetWdata('C:/Users/NLS/Bat_Files/wdata', 'DK')

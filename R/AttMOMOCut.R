@@ -11,6 +11,7 @@
 #' Must be part of groups.
 #' @param indicators list if indicator variables.
 #' One file for each must be available: IndicatorName_data.txt
+#' @param indicatorCuts list of cut-weeks for each indicator in indicators
 #' @param lags weeks of lagged effect (default = 2, max = 9)
 #' @param ptrend significance of trend to be included (default = 0.05)
 #' @param p26 significance of half year-sine be included (default = 0.05)
@@ -19,22 +20,25 @@
 #' @import data.table
 #' @return Write a ;-separated file AttData_indicators.txt in output directory/output.
 #' @export
-AttMOMO <- function(country, wdir, StartWeek, EndWeek, groups, pooled = NULL, indicators,
+AttMOMOCut <- function(country, wdir, StartWeek, EndWeek, groups, pooled = NULL, indicators, indicatorCuts,
                     lags = 2, ptrend = 0.05, p26 = 0.05, p52 = 0.10, Rdata = FALSE) {
   read.table <- write.table <- quasipoisson <- df.residuals <- predict.glm <- residuals <- NULL
 
   # country <- "Denmark"
-  # wdir = "H:/SFSD/INFEPI/Projekter/AKTIVE/MOMO/AttMOMO/AttMOMO_DK"
-  # StartWeek <- '2017-W38'
-  # EndWeek <- '2023-W12'
-  # groups = c('00to14', '15to44', '45to64', '65to74', '75to84', '85P', 'Total')
+  # wdir <- "H:/SFSD/INFEPI/Projekter/AKTIVE/MOMO/AttMOMO/AttMOMO_DK"
+  # StartWeek <- StartWeek
+  # EndWeek <- EndWeek
+  # groups <- c('00to14', '15to44', '45to64', '65to74', '75to84', '85P', 'Total')
   # pooled <- c('00to14', '15to44', '45to64', '65to74', '75to84', '85P')
-  # indicators <- c("GSRSVLS", "GSIPLS", "GSCLS")
+  # indicators <- c("RSVPosInc", "InflPosInc", "COVID19PosInc")
+  # indicatorCuts <- list(`RSVPosInc` = c("2018-W21", "2019-W21", "2020-W21", "2021-W21", "2022-W21"),
+  #                      `InflPosInc` = c("2018-W40", "2019-W40", "2020-W40", "2021-W40", "2022-W40"),
+  #                      `COVID19PosInc` = c("2020-W01", "2021-W01", "2021-W26", "2021-W52"))
   # lags <- 3
   # ptrend <- 0.05
   # p26 <- 0.05
   # p52 <- 0.10
-  # Rdata <- TRUE
+  # Rdata <- FALSE
 
 
   # Directory setup ---------------------------------------------------------
@@ -65,6 +69,10 @@ AttMOMO <- function(country, wdir, StartWeek, EndWeek, groups, pooled = NULL, in
   }
 
   # Indicator data
+  if (length(indicators[duplicated(indicators)]) > 0) {
+    stop("Duplicated indicators")
+  }
+  indicators <- lapply(indicators, sort)
   for (i in indicators) {
     X <- try(read.table(paste0(indir,"/", i, "_data.txt"), header = TRUE, sep = ";", dec = ".", as.is =  TRUE)[, c("group", "ISOweek", i)])
     if (inherits(X, "try-error")) {
@@ -74,8 +82,17 @@ AttMOMO <- function(country, wdir, StartWeek, EndWeek, groups, pooled = NULL, in
     assign(paste0(i, '_data'), X, envir = .GlobalEnv)
   }
 
-  # source('R/AttMOMO_estimation.R')
-  AttData <- AttMOMO::AttMOMO_estimation(country, StartWeek, EndWeek, groups, pooled, indicators, death_data, ET_data, lags, ptrend, p26, p52)
+  # Indicator week-cuts
+  if (length(indicatorCuts[duplicated(indicatorCuts)]) > 0) {
+    stop("Duplicated indicatorCuts")
+  }
+  indicatorCuts <- lapply(indicatorCuts, sort)
+  if (max(match(indicators,names(indicatorCuts))) != length(indicators)) {
+    stop("Not week-cuts for all or too many indicators")
+  }
+
+  # source('R/AttMOMO_estimationCut.R')
+  AttData <- AttMOMO::AttMOMO_estimationCut(country, StartWeek, EndWeek, groups, pooled, indicators, indicatorCuts, death_data, ET_data, lags, ptrend, p26, p52)
 
   write.table(AttData, file = paste0(outdir, "/AttData_", paste(indicators, collapse = '_'), ".txt"), sep = ";", row.names = FALSE, col.names = TRUE)
 
