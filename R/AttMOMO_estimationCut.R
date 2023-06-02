@@ -16,6 +16,7 @@
 #' @param p26 significance of half year-sine be included (default = 0.05)
 #' @param p52 significance of year-sine be included (default = 0.10)
 #' @import data.table
+#' @import glm2
 #' @return data with weekly estimated means and variances
 #' @export
 AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = NULL, indicators, indicatorCuts, death_data, ET_data,
@@ -28,7 +29,7 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
   # groups = c('00to14', '15to44', '45to64', '65to74', '75to84', '85P', 'Total')
   # pooled <- c('00to14', '15to44', '45to64', '65to74', '75to84', '85P')
   # indicators <- c('GSIPLS', 'GSCLS')
-  # indicatorCuts <- list(`GSIPLS` = c("2020-W01", "2022-W27", "2021-W27"),
+  # indicatorCuts <- list(`GSIPLS` = c("2015-W40", "2016-W40", "2017-W40", "2018-W40", "2019-W40", "2020-W40", "2021-W40", "2022-W40", "2023-W40"),
   #                       `GSCLS` = c("2020-W01", "2021-W27", "2022-W27"))
   # death_data <- death_data
   # ET_data <- ET_data
@@ -90,6 +91,8 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
   # Indicator week-cut
   AttData[, paste0(indicators, "period") := 0]
   for (i in indicators) {
+    # Remove cut-points outside StartWeek to EndWeek
+    indicatorCuts[i] <- list(unlist(indicatorCuts[i])[(StartWeek < unlist(indicatorCuts[i])) & (unlist(indicatorCuts[i]) < EndWeek)])
     for (s in unlist(indicatorCuts[i])) {
       AttData[ISOweek >= s, eval(parse(text = paste0(i, "period := ", i, "period + 1")))]
     }
@@ -107,7 +110,7 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
   # lags
   for (i in c(indicators, c('cold_summer', 'warm_summer', 'cold_winter', 'warm_winter'))) {
     for (l in 0:lags) {
-      expr <- parse(text = paste0(i, "_d", l, " := shift(", i, ", ", l, ", type = 'lag')"))
+      expr <- parse(text = paste0(i, "_d", l, " := data.table::shift(", i, ", ", l, ", type = 'lag')"))
       AttData[, eval(expr), by = group]
     }
   }
@@ -136,7 +139,7 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
 
   # Prediction data ---------------------------------------------------------
   # baseline
-  AttData.B <- copy(AttData)
+  AttData.B <- data.table::copy(AttData)
   for (l in 0:lags) {
     for (i in c('cold_summer', 'warm_summer', 'cold_winter', 'warm_winter')) {
       expr <- parse(text = paste0(i, "_d", l, ":= 0"))
@@ -150,7 +153,7 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
     }
   }
   # ET
-  AttData.ET <- copy(AttData)
+  AttData.ET <- data.table::copy(AttData)
   AttData.ET[, `:=`(const = 0, wk = 0, sin52 = 0, cos52 = 0, sin26 = 0, cos26 = 0)]
   for (i in indicators) {
     for (l in 0:lags) {
@@ -162,7 +165,7 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
   }
   # indicators
   for (i in indicators) {
-    X <- copy(AttData)
+    X <- data.table::copy(AttData)
     X[, `:=`(const = 0, wk = 0, sin52 = 0, cos52 = 0, sin26 = 0, cos26 = 0)]
     for (l in 0:lags) {
       for (ir in c('cold_summer', 'warm_summer', 'cold_winter', 'warm_winter')) {
@@ -181,76 +184,74 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
   rm(X)
 
   # Estimation --------------------------------------------------------------
-  # V <- vcov(m) # covariance matrix
   # non-baseline parameters
   parm <- paste(grep("_d[0-9]", names(AttData), value=TRUE), collapse = " + ")
 
   for (g in groups) {
+
     cat(paste("### Group", g, "###\n"))
 
-    f <- paste(c("deaths ~ -1 + const + wk", "sin52 + cos52", "sin26 + cos26", parm), collapse = " + ")
-    m <- try(glm(f, quasipoisson(identity), data = AttData[group == g,]), silent = TRUE)
-    if ((!inherits(m, "try-error")) & (median(AttData[group == g,]$deaths) > 0)) {
-      if (m$converged) {
-        fa <- paste(c("deaths ~ -1 + const + wk", parm), collapse = " + ")
-        ma <- glm(fa, quasipoisson(identity), data = AttData[group == g,])
-        if (anova(m, ma, dispersion = max(1, sum(residuals(m, type = "deviance")^2)/df.residual(m)), test="LRT")$`Pr(>Chi)`[2] > max(p52, p26)) {
-          m <- ma
-        } else {
-          fa <- paste(c("deaths ~ -1 + const + wk", "sin52 + cos52", parm), collapse = " + ")
-          ma <- glm(fa, quasipoisson(identity), data = AttData[group == g,])
-          if (anova(m, ma, dispersion = max(1, sum(residuals(m, type = "deviance")^2)/df.residual(m)), test="LRT")$`Pr(>Chi)`[2] > p26) {
-            m <- ma
-          } else {
-            fa <- paste(c("deaths ~ -1 + const + wk", parm), collapse = " + ")
-            ma <- glm(fa, quasipoisson(identity), data = AttData[group == g,])
-            if (anova(m, ma, dispersion = max(1, sum(residuals(m, type = "deviance")^2)/df.residual(m)), test="LRT")$`Pr(>Chi)`[2] > p52) {
-              m <- ma
+    selection <- function(f, fa, p) {
+      m <- try(glm2::glm2(f, quasipoisson(identity), data = AttData[group == g,]), silent = TRUE)
+      if (!inherits(m, "try-error")) {
+        if (m$converged) {
+          ma <- try(glm2::glm2(fa, quasipoisson(identity), data = AttData[group == g,]), silent = TRUE)
+          if (!inherits(ma, "try-error")) {
+            if (ma$converged &
+                (anova(m, ma, dispersion = max(1, sum(residuals(m, type = "deviance")^2)/df.residual(m)),
+                       test="LRT")$`Pr(>Chi)`[2] > p)) {
+              return(ma)
+            } else {
+              return(m)
             }
+          } else {
+            return(m)
           }
+        } else {
+          return(NULL)
         }
       } else {
-        f <- paste(c("deaths ~ -1 + const + wk", parm), collapse = " + ")
-        m <- try(glm(f, quasipoisson(identity), data = AttData[group == g,]), silent = TRUE)
-        if ((inherits(m, "try-error")) | (!m$converged)) {
-          print(paste("The model did not converge. A Simple model with only trend used i.e. no effect of indicators"))
-          f <- paste(c("deaths ~ -1 + const + wk"))
-          m <- glm(f, quasipoisson(identity), data = AttData[group == g,])
-        }
+        return(NULL)
       }
-    } else {
-      if (median(AttData[group == g,]$deaths) == 0) {msg <- "Zero inflated." } else {msg <- NULL}
-      if (inherits(m, "try-error")) print(paste("Could not fit model.", msg, "Simple model with only trend used i.e. no effect of indicators"))
-      f <- paste(c("deaths ~ -1 + const + wk"))
-      m <- glm(f, quasipoisson(identity), data = AttData[group == g,])
     }
+    suppressWarnings({
+      m <- selection(f = paste(c("deaths ~ -1 + const + wk"), collapse = " + "),
+                     fa = paste(c("deaths ~ -1 + const + wk", parm), collapse = " + "), 0)
 
-    # Remove NA colinearity
+      ma <- selection(f = paste(c("deaths ~ -1 + const + wk", parm), collapse = " + "),
+                      fa = paste(c("deaths ~ -1 + const + wk", "sin52 + cos52", parm), collapse = " + "), p52)
+      if (!is.null(ma)) m <- ma
+
+      ma <- selection(f = paste(c("deaths ~ -1 + const + wk", "sin52 + cos52", parm), collapse = " + "),
+                      fa = paste(c("deaths ~ -1 + const + wk", "sin52 + cos52", "sin26 + cos26", parm), collapse = " + "), p26)
+      if (!is.null(ma)) m <- ma
+    })
+
+    # Remove NA co-linearity
     f <- paste("deaths ~ -1 +", paste(names(m$coefficients[!is.na(m$coefficients)]), collapse = ' + '))
-
-    m <- glm(f, quasipoisson(identity), data = AttData[group == g,])
+    m <- glm2::glm2(f, quasipoisson(identity), data = AttData[group == g,])
 
     print(summary(m, dispersion = max(1, sum(residuals(m, type = "deviance")^2)/df.residual(m))))
 
     # Predictions -------------------------------------------------------------
 
     # Prediction baseline
-    AttData[group == g, `:=`(EB = predict.glm(m, newdata = AttData.B[group == g,], se.fit=TRUE)$fit)]
+    AttData[group == g, `:=`(EB = predict.glm(m, newdata = AttData.B[group == g,], se.fit=FALSE))]
     AttData[group == g, `:=`(VEB = (max(1, sum(residuals(m)^2)/df.residual(m)))*EB +
                                predict.glm(m, newdata = AttData.B[group == g,], dispersion = max(1, sum(residuals(m)^2)/df.residual(m)), se.fit=TRUE)$se.fit^2)]
     #  Prediction ET
-    AttData[group == g, `:=`(EET = predict.glm(m, newdata = AttData.ET[group == g,], se.fit=TRUE)$fit,
+    AttData[group == g, `:=`(EET = predict.glm(m, newdata = AttData.ET[group == g,], se.fit=FALSE),
                              VEET = predict.glm(m, newdata = AttData.ET[group == g,], dispersion = max(1, sum(residuals(m)^2)/df.residual(m)), se.fit=TRUE)$se.fit^2)]
 
     # Predictions indicators
     for (i in indicators) {
-      expr <- parse(text = paste0("`:=`(E", i, " = predict.glm(m, newdata = AttData.", i, "[group == g,], se.fit=TRUE)$fit,
+      expr <- parse(text = paste0("`:=`(E", i, " = predict.glm(m, newdata = AttData.", i, "[group == g,], se.fit=FALSE),
       VE", i, " = predict.glm(m, newdata = AttData.", i, "[group == g,], dispersion = max(1, sum(residuals(m)^2)/df.residual(m)), se.fit=TRUE)$se.fit^2)"))
       AttData[group == g, eval(expr)]
     }
 
     # Adjusted baseline
-    X <- copy(AttData)
+    X <- data.table::copy(AttData)
     for (i in indicators) {
       for (l in 0:lags) {
         for (s in unique(AttData[, eval(parse(text = paste0(i, "period")))])) {
@@ -259,31 +260,29 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
         }
       }
     }
-    AttData[group == g, `:=`(EAB = predict.glm(m, newdata = X[group == g,], se.fit=TRUE)$fit)]
+    AttData[group == g, `:=`(EAB = predict.glm(m, newdata = X[group == g,], se.fit=FALSE))]
     AttData[group == g, `:=`(VEAB = (max(1, sum(residuals(m)^2)/df.residual(m)))*EAB +
                                predict.glm(m, newdata = X[group == g,], dispersion = max(1, sum(residuals(m)^2)/df.residual(m)), se.fit=TRUE)$se.fit^2)]
 
     # Adjusted predictions indicators
     for (i in indicators) {
-      X <- copy(AttData)
+      X <- data.table::copy(AttData)
       X[, `:=`(const = 0, wk = 0, sin52 = 0, cos52 = 0, sin26 = 0, cos26 = 0)]
       for (l in 0:lags) {
         for (ir in c('cold_summer', 'warm_summer', 'cold_winter', 'warm_winter')) {
           expr <- parse(text = paste0(ir, "_d", l, ":= 0"))
           X[, eval(expr)]
         }
-        for (l in 0:lags) {
-          for (s in unique(AttData[, eval(parse(text = paste0(i, "period")))])) {
-            for (ir in indicators[indicators != i]) {
-              expr <- parse(text = paste0(ir, "_d", l, "_", s, " := 0"))
-              X[, eval(expr)]
-            }
-            expr <- parse(text = paste0(i, "_d", l, "_", s, " := ifelse(E", i," < 0, 0,", i, "_d", l, "_", s,")"))
+        for (s in unique(AttData[, eval(parse(text = paste0(i, "period")))])) {
+          for (ir in indicators[indicators != i]) {
+            expr <- parse(text = paste0(ir, "_d", l, "_", s, " := 0"))
             X[, eval(expr)]
           }
+          expr <- parse(text = paste0(i, "_d", l, "_", s, " := ifelse(E", i," < 0, 0,", i, "_d", l, "_", s,")"))
+          X[, eval(expr)]
         }
       }
-      expr <- parse(text = paste0("`:=`(EA", i, " = predict.glm(m, newdata = X[group == g,], se.fit=TRUE)$fit,
+      expr <- parse(text = paste0("`:=`(EA", i, " = pmax(0, predict.glm(m, newdata = X[group == g,], se.fit=FALSE)),
                                   VEA", i, " = predict.glm(m, newdata = X[group == g,], dispersion = max(1, sum(residuals(m)^2)/df.residual(m)), se.fit=TRUE)$se.fit^2)"))
       AttData[group == g, eval(expr)]
     }
@@ -305,8 +304,7 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
       }
     }
   }
-  # rm(f, fa, expr, parm, g, i, l, m, ma, AttData.B, AttData.ET)
-  rm(fa, expr, parm, g, i, l, ma, AttData.B, AttData.ET)
+  rm(expr, parm, g, i, l, ma, AttData.B, AttData.ET)
 
   # Pooled total ------------------------------------------------------------
   if (!is.null(pooled)) {

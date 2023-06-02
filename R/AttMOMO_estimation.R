@@ -172,6 +172,7 @@ AttMOMO_estimation <- function(country, StartWeek, EndWeek, groups, pooled = NUL
   parm <- paste(grep("_d[0-9]", names(AttData), value=TRUE), collapse = " + ")
 
   for (g in groups) {
+
     print(paste("### Group", g, "###"))
 
     f <- paste(c("deaths ~ -1 + const + wk", "sin52 + cos52", "sin26 + cos26", parm), collapse = " + ")
@@ -258,15 +259,13 @@ AttMOMO_estimation <- function(country, StartWeek, EndWeek, groups, pooled = NUL
           expr <- parse(text = paste0(ir, "_d", l, ":= 0"))
           X[, eval(expr)]
         }
-        for (l in 0:lags) {
-          for (s in unique(AttData$season)) {
-            for (ir in indicators[indicators != i]) {
-              expr <- parse(text = paste0(ir, "_d", l, "_", s, " := 0"))
-              X[, eval(expr)]
-            }
-            expr <- parse(text = paste0(i, "_d", l, "_", s, " := ifelse(E", i," < 0, 0,", i, "_d", l, "_", s,")"))
+        for (s in unique(AttData$season)) {
+          for (ir in indicators[indicators != i]) {
+            expr <- parse(text = paste0(ir, "_d", l, "_", s, " := 0"))
             X[, eval(expr)]
           }
+          expr <- parse(text = paste0(i, "_d", l, "_", s, " := ifelse(E", i," < 0, 0,", i, "_d", l, "_", s,")"))
+          X[, eval(expr)]
         }
       }
       expr <- parse(text = paste0("`:=`(EA", i, " = predict.glm(m, newdata = X[group == g,], se.fit=TRUE)$fit,
