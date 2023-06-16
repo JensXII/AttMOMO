@@ -326,6 +326,7 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
     pooledData <- AttData[group %in% pooled,
                           .(group = 'TotalPooled',
                             deaths = sum(deaths, na.rm = TRUE),
+                            N = sum(N, na.rm = TRUE),
                             ET = mean(ET, na.rm = TRUE),
                             EB = sum(EB, na.rm = TRUE),
                             VEB = sum(VEB, na.rm = TRUE),
