@@ -55,10 +55,24 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
   AttData <- AttData[(StartWeek <= ISOweek) & (ISOweek <= EndWeek) & (group %in% groups),]
   AttData <- AttData[order(group, ISOweek),]
 
+  # Population data
+  if (exists("population_data")) {
+    pop_data <- data.table::data.table(population_data)
+    if (sum(colnames(pop_data) %in% c('group', 'ISOweek', 'N')) != 3) {
+      stop('Columns group, ISOweek, N not in population_date')
+    }
+    if ((min(pop_data$ISOweek) > StartWeek) | (max(pop_data$ISOweek) < EndWeek)) {
+      stop(paste("Population_data do not cover", StartWeek, "to", EndWeek))
+    }
+    AttData <- merge(AttData, pop_data[order(ISOweek), ], by = c("group", "ISOweek"))
+  } else {
+    AttData[, N := 1]
+  }
+
   # Extreme temperature data
   ET_data <- data.table::data.table(ET_data)
   if (sum(colnames(ET_data) %in% c('ISOweek', 'ET')) != 2) {
-    stop('Columns ISOweek, deaths not in ET_date')
+    stop('Columns ISOweek, ET not in ET_date')
   }
   if ((min(ET_data$ISOweek) > StartWeek) | (max(ET_data$ISOweek) < EndWeek)) {
     stop(paste("ET_data do not cover", StartWeek, "to", EndWeek))
@@ -192,10 +206,11 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
     cat(paste("### Group", g, "###\n"))
 
     selection <- function(f, fa, p) {
-      m <- try(glm2::glm2(f, quasipoisson(identity), data = AttData[group == g,]), silent = TRUE)
+      # m <- try(glm2::glm2(f, quasipoisson(identity), data = AttData[group == g,]), silent = TRUE)
+      m <- try(glm2::glm2(f, quasipoisson(identity), data = AttData[group == g,], weights = N), silent = TRUE)
       if (!inherits(m, "try-error")) {
         if (m$converged) {
-          ma <- try(glm2::glm2(fa, quasipoisson(identity), data = AttData[group == g,]), silent = TRUE)
+          ma <- try(glm2::glm2(fa, quasipoisson(identity), data = AttData[group == g,], weights = N), silent = TRUE)
           if (!inherits(ma, "try-error")) {
             if (ma$converged &
                 (anova(m, ma, dispersion = max(1, sum(residuals(m, type = "deviance")^2)/df.residual(m)),
@@ -215,21 +230,21 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
       }
     }
     suppressWarnings({
-      m <- selection(f = paste(c("deaths ~ -1 + const + wk"), collapse = " + "),
-                     fa = paste(c("deaths ~ -1 + const + wk", parm), collapse = " + "), 0)
+      m <- selection(f = paste(c("deaths/N ~ -1 + const + wk"), collapse = " + "),
+                     fa = paste(c("deaths/N ~ -1 + const + wk", parm), collapse = " + "), 0)
 
-      ma <- selection(f = paste(c("deaths ~ -1 + const + wk", parm), collapse = " + "),
-                      fa = paste(c("deaths ~ -1 + const + wk", "sin52 + cos52", parm), collapse = " + "), p52)
+      ma <- selection(f = paste(c("deaths /N~ -1 + const + wk", parm), collapse = " + "),
+                      fa = paste(c("deaths/N ~ -1 + const + wk", "sin52 + cos52", parm), collapse = " + "), p52)
       if (!is.null(ma)) m <- ma
 
-      ma <- selection(f = paste(c("deaths ~ -1 + const + wk", "sin52 + cos52", parm), collapse = " + "),
-                      fa = paste(c("deaths ~ -1 + const + wk", "sin52 + cos52", "sin26 + cos26", parm), collapse = " + "), p26)
+      ma <- selection(f = paste(c("deaths/N ~ -1 + const + wk", "sin52 + cos52", parm), collapse = " + "),
+                      fa = paste(c("deaths/N ~ -1 + const + wk", "sin52 + cos52", "sin26 + cos26", parm), collapse = " + "), p26)
       if (!is.null(ma)) m <- ma
     })
 
     # Remove NA co-linearity
     f <- paste("deaths ~ -1 +", paste(names(m$coefficients[!is.na(m$coefficients)]), collapse = ' + '))
-    m <- glm2::glm2(f, quasipoisson(identity), data = AttData[group == g,])
+    m <- glm2::glm2(f, quasipoisson(identity), data = AttData[group == g,], weights = N)
 
     print(summary(m, dispersion = max(1, sum(residuals(m, type = "deviance")^2)/df.residual(m))))
 

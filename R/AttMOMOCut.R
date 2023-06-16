@@ -61,6 +61,14 @@ AttMOMOCut <- function(country, wdir, StartWeek, EndWeek, groups, pooled = NULL,
     stop(paste0("Could not read ", indir, "/death_data.txt"))
   }
 
+  # Population data
+  if (file.exists(paste0(indir, "/population_data.txt"))) {
+    population_data <- try(read.table(paste0(indir, "/population_data.txt"), sep=";", dec=".", header = TRUE, as.is = TRUE)[,c("group", "ISOweek", "N")])
+    if (inherits(population_data, "try-error")) {
+      stop(paste0("Could not read ", indir, "/population_data.txt"))
+    }
+  }
+
   # Extreme temperature data
   ET_data <- try(read.table(paste0(indir,"/ET_data.txt"), header = TRUE, sep = ";", dec = ".", as.is =  TRUE))[, c("ISOweek", "ET")]
   if (inherits(ET_data,"try-error")) {
