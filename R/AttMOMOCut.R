@@ -25,14 +25,15 @@ AttMOMOCut <- function(country, wdir, StartWeek, EndWeek, groups, pooled = NULL,
   read.table <- write.table <- quasipoisson <- df.residuals <- predict.glm <- residuals <- NULL
 
   # country <- "Denmark"
-  # wdir <- "H:/SFSD/INFEPI/Projekter/AKTIVE/MOMO/AttMOMO/Europe2020_2022/CountryData/Denmark_DK"
-  # StartWeek <- "2017-W01"
-  # EndWeek <- "2023-W08"
+  # wdir <- "H:/SFSD/INFEPI/Projekter/AKTIVE/MOMO/AttMOMO/AttMOMO_DK"
+  # StartWeek <- StartWeek
+  # EndWeek <- EndWeek
   # groups <- c('00to14', '15to44', '45to64', '65to74', '75to84', '85P', 'Total')
   # pooled <- c('00to14', '15to44', '45to64', '65to74', '75to84', '85P')
-  # indicators <- c("COVID19Inc", "InflInc")
-  # indicatorCuts <- list(`COVID19Inc` = c("2020-W01", "2021-W01", "2021-W26", "2021-W52", "2022-W27"),
-  #                      `InflInc` = c("2015-W40", "2016-W40", "2017-W40", "2018-W40", "2019-W40", "2020-W40", "2021-W40", "2022-W40", "2023-W40"))
+  # indicators <- c("RSVPosInc", "InflPosInc", "COVID19PosInc")
+  # indicatorCuts <- list(`RSVPosInc` = c("2015-W21", "2016-W21", "2017-W21", "2018-W21", "2019-W21", "2020-W21", "2021-W21", "2022-W21"),
+  #                      `InflPosInc` = c("2015-W40", "2016-W40", "2017-W40", "2018-W40", "2019-W40", "2020-W40", "2021-W40", "2022-W40"),
+  #                      `COVID19PosInc` = c("2020-W01", "2021-W01", "2021-W26", "2021-W52", "2022-W27"))
   # lags <- 3
   # ptrend <- 0.05
   # p26 <- 0.05

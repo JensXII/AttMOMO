@@ -323,7 +323,7 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
 
   # Pooled total ------------------------------------------------------------
   if (!is.null(pooled)) {
-    pooledData <- AttData[group %in% pooled,
+    pooledData <- AttData[group %in% (pooled),
                           .(group = 'TotalPooled',
                             deaths = sum(deaths, na.rm = TRUE),
                             N = sum(N, na.rm = TRUE),
@@ -343,7 +343,7 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
                                   VE", i, " = sum(VE", i, ", na.rm = TRUE),
                                   EA", i, " = sum(EA", i, ", na.rm = TRUE),
                                   VEA", i, " = sum(VEA", i, ", na.rm = TRUE))"))
-      pooledData <- merge(pooledData, AttData[group %in% pooled, eval(expr), keyby = ISOweek], by = "ISOweek", all.x = TRUE)
+      pooledData <- merge(pooledData, AttData[group %in% (pooled), eval(expr), keyby = ISOweek], by = "ISOweek", all.x = TRUE)
     }
     AttData <- rbind(AttData, pooledData)
   }
