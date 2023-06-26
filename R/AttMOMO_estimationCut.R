@@ -57,14 +57,14 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
 
   # Population data
   if (exists("population_data")) {
-    pop_data <- data.table::data.table(population_data)
-    if (sum(colnames(pop_data) %in% c('group', 'ISOweek', 'N')) != 3) {
+    population_data <- data.table::data.table(population_data)
+    if (sum(colnames(population_data) %in% c('group', 'ISOweek', 'N')) != 3) {
       stop('Columns group, ISOweek, N not in population_date')
     }
-    if ((min(pop_data$ISOweek) > StartWeek) | (max(pop_data$ISOweek) < EndWeek)) {
+    if ((min(population_data$ISOweek) > StartWeek) | (max(population_data$ISOweek) < EndWeek)) {
       stop(paste("Population_data do not cover", StartWeek, "to", EndWeek))
     }
-    AttData <- merge(AttData, pop_data[order(ISOweek), ], by = c("group", "ISOweek"))
+    AttData <- merge(AttData, population_data[order(ISOweek)], by = c("group", "ISOweek"))
   } else {
     AttData[, N := 1]
   }
@@ -206,7 +206,6 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
     cat(paste("### Group", g, "###\n"))
 
     selection <- function(f, fa, p) {
-      # m <- try(glm2::glm2(f, quasipoisson(identity), data = AttData[group == g,]), silent = TRUE)
       m <- try(glm2::glm2(f, quasipoisson(identity), data = AttData[group == g,], weights = N), silent = TRUE)
       if (!inherits(m, "try-error")) {
         if (m$converged) {
@@ -233,7 +232,7 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
       m <- selection(f = paste(c("deaths/N ~ -1 + const + wk"), collapse = " + "),
                      fa = paste(c("deaths/N ~ -1 + const + wk", parm), collapse = " + "), 0)
 
-      ma <- selection(f = paste(c("deaths /N~ -1 + const + wk", parm), collapse = " + "),
+      ma <- selection(f = paste(c("deaths/N ~ -1 + const + wk", parm), collapse = " + "),
                       fa = paste(c("deaths/N ~ -1 + const + wk", "sin52 + cos52", parm), collapse = " + "), p52)
       if (!is.null(ma)) m <- ma
 
@@ -319,7 +318,7 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
       }
     }
   }
-  rm(expr, parm, g, i, l, ma, AttData.B, AttData.ET)
+  rm(expr, parm, g, i, l, ma, pop_data, population, AttData.B, AttData.ET)
 
   # Pooled total ------------------------------------------------------------
   if (!is.null(pooled)) {
