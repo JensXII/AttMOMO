@@ -318,7 +318,7 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
       }
     }
   }
-  rm(expr, parm, g, i, l, ma, pop_data, population, AttData.B, AttData.ET)
+  rm(expr, parm, g, i, l, ma, AttData.B, AttData.ET)
 
   # Pooled total ------------------------------------------------------------
   if (!is.null(pooled)) {
