@@ -107,7 +107,7 @@ AttMOMOCut <- function(country, wdir, StartWeek, EndWeek, groups, pooled = NULL,
   rm(X)
 
   # source('R/AttMOMO_estimationCut.R')
-  AttData <- AttMOMO::AttMOMO_estimationCut(country, StartWeek, EndWeek, groups, pooled, indicators, indicatorCuts, death_data, ET_data, lags, ptrend, p26, p52)
+  AttData <- AttMOMO::AttMOMO_estimationCut(country, StartWeek, EndWeek, groups, pooled, indicators, indicatorCuts, death_data, population_data, ET_data, lags, ptrend, p26, p52)
 
   write.table(AttData, file = paste0(outdir, "/AttData_", paste(indicators, collapse = '_'), ".txt"), sep = ";", row.names = FALSE, col.names = TRUE)
 

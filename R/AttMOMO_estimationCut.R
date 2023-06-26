@@ -19,7 +19,7 @@
 #' @import glm2
 #' @return data with weekly estimated means and variances
 #' @export
-AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = NULL, indicators, indicatorCuts, death_data, ET_data,
+AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = NULL, indicators, indicatorCuts, death_data, population_data, ET_data,
                                   lags = 3, ptrend = 0.05, p26 = 0.05, p52 = 0.10) {
   group <- ET <- summer <- winter <- EB <- EAB <- deaths <- VEB <- EET <- VEET <- VEAB <- wk <- . <- anova <- glm <- median <- residuals <- df.residual <- predict.glm <- quasipoisson <- NULL
 
@@ -32,6 +32,7 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
   # indicatorCuts <- list(`GSIPLS` = c("2015-W40", "2016-W40", "2017-W40", "2018-W40", "2019-W40", "2020-W40", "2021-W40", "2022-W40", "2023-W40"),
   #                       `GSCLS` = c("2020-W01", "2021-W27", "2022-W27"))
   # death_data <- death_data
+  # population_data <- population_data
   # ET_data <- ET_data
   # lags <- 3
   # ptrend <- 0.05
