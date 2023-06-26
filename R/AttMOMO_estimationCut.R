@@ -56,8 +56,8 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
   AttData <- AttData[order(group, ISOweek),]
 
   # Population data
-  if (exists("population_data")) {
-    population_data <- data.table::data.table(population_data)
+  population_data <- try(data.table::data.table(population_data), silent = TRUE)
+  if (!inherits(population_data, "try-error")) {
     if (sum(colnames(population_data) %in% c('group', 'ISOweek', 'N')) != 3) {
       stop('Columns group, ISOweek, N not in population_date')
     }
