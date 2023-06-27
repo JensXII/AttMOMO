@@ -10,6 +10,7 @@
 #' One file for each must be available in memory: IndicatorName_data
 #' @param indicatorCuts list of cut-weeks for each indicator in indicators
 #' @param death_data Name of deaths data file in memory.
+#' @param population_data Name of population data file in memory. NULL if not available (default)
 #' @param ET_data Name of ET data file in memory.
 #' @param lags weeks of lagged effect (default = 3, max = 9)
 #' @param ptrend significance of trend to be included (default = 0.05)
@@ -19,7 +20,7 @@
 #' @import glm2
 #' @return data with weekly estimated means and variances
 #' @export
-AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = NULL, indicators, indicatorCuts, death_data, population_data, ET_data,
+AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = NULL, indicators, indicatorCuts, death_data, population_data = NULL, ET_data,
                                   lags = 3, ptrend = 0.05, p26 = 0.05, p52 = 0.10) {
   group <- ET <- summer <- winter <- EB <- EAB <- deaths <- VEB <- EET <- VEET <- VEAB <- wk <- . <- anova <- glm <- median <- residuals <- df.residual <- predict.glm <- quasipoisson <- NULL
 
@@ -57,8 +58,8 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
   AttData <- AttData[order(group, ISOweek),]
 
   # Population data
-  population_data <- try(data.table::data.table(population_data), silent = TRUE)
-  if (!inherits(population_data, "try-error")) {
+  if (!is.null(population_data)) {
+    population_data <- data.table::data.table(population_data)
     if (sum(colnames(population_data) %in% c('group', 'ISOweek', 'N')) != 3) {
       stop('Columns group, ISOweek, N not in population_date')
     }
@@ -326,7 +327,7 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
     pooledData <- AttData[group %in% (pooled),
                           .(group = 'TotalPooled',
                             deaths = sum(deaths, na.rm = TRUE),
-                            N = sum(N, na.rm = TRUE),
+                            N = ifelse(is.null(population_data), 1, sum(N, na.rm = TRUE)),
                             ET = mean(ET, na.rm = TRUE),
                             EB = sum(EB, na.rm = TRUE),
                             VEB = sum(VEB, na.rm = TRUE),

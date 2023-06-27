@@ -63,18 +63,21 @@ AttMOMOCut <- function(country, wdir, StartWeek, EndWeek, groups, pooled = NULL,
   }
 
   # Population data
-  # if (file.exists(paste0(indir, "/population_data.txt"))) {
+  if (file.exists(paste0(indir, "/population_data.txt"))) {
     population_data <- try(read.table(paste0(indir, "/population_data.txt"), sep=";", dec=".", header = TRUE, as.is = TRUE)[,c("group", "ISOweek", "N")])
     if (inherits(population_data, "try-error")) {
       stop(paste0("Could not read ", indir, "/population_data.txt"))
     }
-  # }
-  # if (file.exists(paste0(indir, "/Population_data.txt"))) {
-  #   population_data <- try(read.table(paste0(indir, "/Population_data.txt"), sep=";", dec=".", header = TRUE, as.is = TRUE)[,c("group", "ISOweek", "N")])
-  #   if (inherits(population_data, "try-error")) {
-  #     stop(paste0("Could not read ", indir, "/Population_data.txt"))
-  #   }
-  # }
+  } else {
+    if (file.exists(paste0(indir, "/Population_data.txt"))) {
+      population_data <- try(read.table(paste0(indir, "/Population_data.txt"), sep=";", dec=".", header = TRUE, as.is = TRUE)[,c("group", "ISOweek", "N")])
+      if (inherits(population_data, "try-error")) {
+        stop(paste0("Could not read ", indir, "/Population_data.txt"))
+      }
+    } else {
+      population_data <- NULL
+    }
+  }
 
   # Extreme temperature data
   ET_data <- try(read.table(paste0(indir,"/ET_data.txt"), header = TRUE, sep = ";", dec = ".", as.is =  TRUE))[, c("ISOweek", "ET")]
@@ -106,7 +109,8 @@ AttMOMOCut <- function(country, wdir, StartWeek, EndWeek, groups, pooled = NULL,
   }
   rm(X)
 
-  # source('R/AttMOMO_estimationCut.R')
+  # source('H:/SFSD/INFEPI/Projekter/AKTIVE/MOMO/AttMOMO/AttMOMO/R/AttMOMO_estimationCut.R')
+  # AttData <- AttMOMO_estimationCut(country, StartWeek, EndWeek, groups, pooled, indicators, indicatorCuts, death_data, population_data, ET_data, lags, ptrend, p26, p52)
   AttData <- AttMOMO::AttMOMO_estimationCut(country, StartWeek, EndWeek, groups, pooled, indicators, indicatorCuts, death_data, population_data, ET_data, lags, ptrend, p26, p52)
 
   write.table(AttData, file = paste0(outdir, "/AttData_", paste(indicators, collapse = '_'), ".txt"), sep = ";", row.names = FALSE, col.names = TRUE)

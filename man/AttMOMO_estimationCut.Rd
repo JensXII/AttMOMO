@@ -13,6 +13,7 @@ AttMOMO_estimationCut(
   indicators,
   indicatorCuts,
   death_data,
+  population_data = NULL,
   ET_data,
   lags = 3,
   ptrend = 0.05,
@@ -38,6 +39,8 @@ One file for each must be available in memory: IndicatorName_data}
 \item{indicatorCuts}{list of cut-weeks for each indicator in indicators}
 
 \item{death_data}{Name of deaths data file in memory.}
+
+\item{population_data}{Name of population data file in memory. NULL if not available (default)}
 
 \item{ET_data}{Name of ET data file in memory.}
 
