@@ -22,7 +22,7 @@
 #' @export
 AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = NULL, indicators, indicatorCuts, death_data, population_data = NULL, ET_data,
                                   lags = 3, ptrend = 0.05, p26 = 0.05, p52 = 0.10) {
-  group <- ET <- summer <- winter <- EB <- EAB <- deaths <- VEB <- EET <- VEET <- VEAB <- wk <- . <- anova <- glm <- median <- residuals <- df.residual <- predict.glm <- quasipoisson <- NULL
+  group <- ET <- summer <- winter <- EB <- EAB <- deaths <- VEB <- EET <- VEET <- VEAB <- wk <- . <- anova <- glm <- median <- residuals <- df.residual <- predict.glm <- quasipoisson <- N <- NULL
 
   # country <- "Denmark"
   # StartWeek <- '2017-W38'
@@ -201,7 +201,7 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
 
   # Estimation --------------------------------------------------------------
   # non-baseline parameters
-  parm <- paste(grep("_d[0-9]", names(AttData), value=TRUE), collapse = " + ")
+  parm <- paste(grep("_d[0-9]", names(AttData), value = TRUE), collapse = " + ")
 
   for (g in groups) {
 
@@ -214,8 +214,7 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
           ma <- try(glm2::glm2(fa, quasipoisson(identity), data = AttData[group == g,], weights = N), silent = TRUE)
           if (!inherits(ma, "try-error")) {
             if (ma$converged &
-                (anova(m, ma, dispersion = max(1, sum(residuals(m, type = "deviance")^2)/df.residual(m)),
-                       test="LRT")$`Pr(>Chi)`[2] > p)) {
+                (anova(m, ma, test="LRT")$`Pr(>Chi)`[2] > p)) {
               return(ma)
             } else {
               return(m)
@@ -247,22 +246,22 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
     f <- paste("deaths ~ -1 +", paste(names(m$coefficients[!is.na(m$coefficients)]), collapse = ' + '))
     m <- glm2::glm2(f, quasipoisson(identity), data = AttData[group == g,], weights = N)
 
-    print(summary(m, dispersion = max(1, sum(residuals(m, type = "deviance")^2)/df.residual(m))))
+    print(summary(m))
 
     # Predictions -------------------------------------------------------------
 
-    # Prediction baseline
-    AttData[group == g, `:=`(EB = predict.glm(m, newdata = AttData.B[group == g,], se.fit=FALSE))]
-    AttData[group == g, `:=`(VEB = (max(1, sum(residuals(m)^2)/df.residual(m)))*EB +
-                               predict.glm(m, newdata = AttData.B[group == g,], dispersion = max(1, sum(residuals(m)^2)/df.residual(m)), se.fit=TRUE)$se.fit^2)]
+    # Prediction baseline,
+    AttData[group == g, `:=`(EB = predict.glm(m, newdata = AttData.B[group == g,], se.fit = FALSE))]
+    AttData[group == g, `:=`(VEB = predict.glm(m, newdata = AttData.B[group == g,], se.fit = TRUE)$se.fit^2)]
     #  Prediction ET
-    AttData[group == g, `:=`(EET = predict.glm(m, newdata = AttData.ET[group == g,], se.fit=FALSE),
-                             VEET = predict.glm(m, newdata = AttData.ET[group == g,], dispersion = max(1, sum(residuals(m)^2)/df.residual(m)), se.fit=TRUE)$se.fit^2)]
+    AttData[group == g, `:=`(EET = predict.glm(m, newdata = AttData.ET[group == g,], se.fit = FALSE))]
+    AttData[group == g, `:=`(VEET = predict.glm(m, newdata = AttData.ET[group == g,], se.fit = TRUE)$se.fit^2)]
 
     # Predictions indicators
     for (i in indicators) {
-      expr <- parse(text = paste0("`:=`(E", i, " = predict.glm(m, newdata = AttData.", i, "[group == g,], se.fit=FALSE),
-      VE", i, " = predict.glm(m, newdata = AttData.", i, "[group == g,], dispersion = max(1, sum(residuals(m)^2)/df.residual(m)), se.fit=TRUE)$se.fit^2)"))
+      expr <- parse(text = paste0("`:=`(E", i, " = predict.glm(m, newdata = AttData.", i, "[group == g,], se.fit = FALSE))"))
+      AttData[group == g, eval(expr)]
+      expr <- parse(text = paste0("`:=`(VE", i, " = predict.glm(m, newdata = AttData.", i, "[group == g,], se.fit = TRUE)$se.fit^2)"))
       AttData[group == g, eval(expr)]
     }
 
@@ -277,8 +276,7 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
       }
     }
     AttData[group == g, `:=`(EAB = predict.glm(m, newdata = X[group == g,], se.fit=FALSE))]
-    AttData[group == g, `:=`(VEAB = (max(1, sum(residuals(m)^2)/df.residual(m)))*EAB +
-                               predict.glm(m, newdata = X[group == g,], dispersion = max(1, sum(residuals(m)^2)/df.residual(m)), se.fit=TRUE)$se.fit^2)]
+    AttData[group == g, `:=`(VEAB = predict.glm(m, newdata = X[group == g,], se.fit=TRUE)$se.fit^2)]
 
     # Adjusted predictions indicators
     for (i in indicators) {
@@ -298,8 +296,9 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
           X[, eval(expr)]
         }
       }
-      expr <- parse(text = paste0("`:=`(EA", i, " = pmax(0, predict.glm(m, newdata = X[group == g,], se.fit=FALSE)),
-                                  VEA", i, " = predict.glm(m, newdata = X[group == g,], dispersion = max(1, sum(residuals(m)^2)/df.residual(m)), se.fit=TRUE)$se.fit^2)"))
+      expr <- parse(text = paste0("`:=`(EA", i, " = pmax(0, predict.glm(m, newdata = X[group == g,], se.fit=FALSE)))"))
+      AttData[group == g, eval(expr)]
+      expr <- parse(text = paste0("`:=`(VEA", i, " = predict.glm(m, newdata = X[group == g,], se.fit=TRUE)$se.fit^2)"))
       AttData[group == g, eval(expr)]
     }
     rm(X)
