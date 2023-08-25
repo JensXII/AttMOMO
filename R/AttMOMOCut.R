@@ -100,9 +100,6 @@ AttMOMOCut <- function(country, wdir, StartWeek, EndWeek, groups, pooled = NULL,
   }
 
   # Indicator week-cuts
-  if (length(indicatorCuts[duplicated(indicatorCuts)]) > 0) {
-    stop("Duplicated indicatorCuts")
-  }
   indicatorCuts <- lapply(indicatorCuts, sort)
   if (max(match(indicators,names(indicatorCuts))) != length(indicators)) {
     stop("Not week-cuts for all or too many indicators")

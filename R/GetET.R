@@ -22,7 +22,7 @@ GetET <- function(ET, StartWeek, EndWeek, tvar) {
   cols <- c("date", "pop3", "NUTS3", tvar)
   ET <- ET[, ..cols]
   rm(cols)
-  # renane tvar to temp
+  # rename tvar to temp
   setnames(ET, old = tvar, new = "temp")
 
   # time span
