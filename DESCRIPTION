@@ -1,6 +1,6 @@
 Package: AttMOMO
 Title: Attributable Motality Monitoring
-Version: 2023.06.26
+Version: 2023.12.04
 Authors@R: person("Jens", "Nielsen", email = "nls@ssi.dk", role = c("aut", "cre"))
 Maintainer: Jens Nielsen <nls@ssi.dk>
 Description: Estimate number of deaths attributable to one or more pathogens, adjusted for excess temperatures.

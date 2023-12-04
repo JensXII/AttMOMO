@@ -229,21 +229,20 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
         return(NULL)
       }
     }
+
     suppressWarnings({
       m <- selection(f = paste(c("deaths/N ~ -1 + const + wk"), collapse = " + "),
                      fa = paste(c("deaths/N ~ -1 + const + wk", parm), collapse = " + "), 0)
-
       ma <- selection(f = paste(c("deaths/N ~ -1 + const + wk", parm), collapse = " + "),
                       fa = paste(c("deaths/N ~ -1 + const + wk", "sin52 + cos52", parm), collapse = " + "), p52)
       if (!is.null(ma)) m <- ma
-
       ma <- selection(f = paste(c("deaths/N ~ -1 + const + wk", "sin52 + cos52", parm), collapse = " + "),
                       fa = paste(c("deaths/N ~ -1 + const + wk", "sin52 + cos52", "sin26 + cos26", parm), collapse = " + "), p26)
       if (!is.null(ma)) m <- ma
     })
 
     # Remove NA co-linearity
-    f <- paste("deaths ~ -1 +", paste(names(m$coefficients[!is.na(m$coefficients)]), collapse = ' + '))
+    f <- paste("deaths/N ~ -1 +", paste(names(m$coefficients[!is.na(m$coefficients)]), collapse = ' + '))
     m <- glm2::glm2(f, quasipoisson(identity), data = AttData[group == g,], weights = N)
 
     print(summary(m))
