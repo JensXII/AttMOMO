@@ -250,17 +250,17 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
     # Predictions -------------------------------------------------------------
 
     # Prediction baseline,
-    AttData[group == g, `:=`(EB = predict.glm(m, newdata = AttData.B[group == g,], se.fit = FALSE))]
-    AttData[group == g, `:=`(VEB = predict.glm(m, newdata = AttData.B[group == g,], se.fit = TRUE)$se.fit^2)]
+    AttData[group == g, `:=`(EB = N*predict.glm(m, newdata = AttData.B[group == g,], se.fit = FALSE))]
+    AttData[group == g, `:=`(VEB = (N^2)*predict.glm(m, newdata = AttData.B[group == g,], se.fit = TRUE)$se.fit^2)]
     #  Prediction ET
-    AttData[group == g, `:=`(EET = predict.glm(m, newdata = AttData.ET[group == g,], se.fit = FALSE))]
-    AttData[group == g, `:=`(VEET = predict.glm(m, newdata = AttData.ET[group == g,], se.fit = TRUE)$se.fit^2)]
+    AttData[group == g, `:=`(EET = N*predict.glm(m, newdata = AttData.ET[group == g,], se.fit = FALSE))]
+    AttData[group == g, `:=`(VEET = (N^2)*predict.glm(m, newdata = AttData.ET[group == g,], se.fit = TRUE)$se.fit^2)]
 
     # Predictions indicators
     for (i in indicators) {
-      expr <- parse(text = paste0("`:=`(E", i, " = predict.glm(m, newdata = AttData.", i, "[group == g,], se.fit = FALSE))"))
+      expr <- parse(text = paste0("`:=`(E", i, " = N*predict.glm(m, newdata = AttData.", i, "[group == g,], se.fit = FALSE))"))
       AttData[group == g, eval(expr)]
-      expr <- parse(text = paste0("`:=`(VE", i, " = predict.glm(m, newdata = AttData.", i, "[group == g,], se.fit = TRUE)$se.fit^2)"))
+      expr <- parse(text = paste0("`:=`(VE", i, " = (N^2)*predict.glm(m, newdata = AttData.", i, "[group == g,], se.fit = TRUE)$se.fit^2)"))
       AttData[group == g, eval(expr)]
     }
 
@@ -274,8 +274,8 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
         }
       }
     }
-    AttData[group == g, `:=`(EAB = predict.glm(m, newdata = X[group == g,], se.fit=FALSE))]
-    AttData[group == g, `:=`(VEAB = predict.glm(m, newdata = X[group == g,], se.fit=TRUE)$se.fit^2)]
+    AttData[group == g, `:=`(EAB = N*predict.glm(m, newdata = X[group == g,], se.fit=FALSE))]
+    AttData[group == g, `:=`(VEAB = (N^2)*predict.glm(m, newdata = X[group == g,], se.fit=TRUE)$se.fit^2)]
 
     # Adjusted predictions indicators
     for (i in indicators) {
@@ -295,9 +295,9 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
           X[, eval(expr)]
         }
       }
-      expr <- parse(text = paste0("`:=`(EA", i, " = pmax(0, predict.glm(m, newdata = X[group == g,], se.fit=FALSE)))"))
+      expr <- parse(text = paste0("`:=`(EA", i, " = pmax(0, N*predict.glm(m, newdata = X[group == g,], se.fit=FALSE)))"))
       AttData[group == g, eval(expr)]
-      expr <- parse(text = paste0("`:=`(VEA", i, " = predict.glm(m, newdata = X[group == g,], se.fit=TRUE)$se.fit^2)"))
+      expr <- parse(text = paste0("`:=`(VEA", i, " = (N^2)*predict.glm(m, newdata = X[group == g,], se.fit=TRUE)$se.fit^2)"))
       AttData[group == g, eval(expr)]
     }
     rm(X)
