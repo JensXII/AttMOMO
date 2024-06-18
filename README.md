@@ -4,6 +4,9 @@ Estimate number of deaths attributable to one or more pathogens, adjusted for ex
 
 https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2021.26.8.2001646
 
+# AttMOMO 2024.06.18
+AttMOMO_cut return a list of two elements: AttData (previously only return) and R2 containing R-square values for the estimations.
+
 # AttMOMO 2023.06.26
 Included and adjust for population size in the AttMOMOCut and AttMOMO_estimationCut.
 If a ;-separated population_data.txt file is available in wdir/data

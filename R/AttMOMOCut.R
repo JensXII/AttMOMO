@@ -16,9 +16,9 @@
 #' @param ptrend significance of trend to be included (default = 0.05)
 #' @param p26 significance of half year-sine be included (default = 0.05)
 #' @param p52 significance of year-sine be included (default = 0.10)
-#' @param Rdata Return data to R (TRUE/FALSE - default FALSE).
+#' @param Rdata Return list with data and R-square values to R (TRUE/FALSE - default FALSE).
 #' @import data.table
-#' @return Write a ;-separated file AttData_indicators.txt in output directory/output.
+#' @return Write two ;-separated files AttData_indicators.txt and R2_indicators.txt in wdir/output.
 #' @export
 AttMOMOCut <- function(country, wdir, StartWeek, EndWeek, groups, pooled = NULL, indicators, indicatorCuts,
                     lags = 2, ptrend = 0.05, p26 = 0.05, p52 = 0.10, Rdata = FALSE) {
@@ -108,7 +108,8 @@ AttMOMOCut <- function(country, wdir, StartWeek, EndWeek, groups, pooled = NULL,
   # AttData <- AttMOMO_estimationCut(country, StartWeek, EndWeek, groups, pooled, indicators, indicatorCuts, death_data, population_data, ET_data, lags, ptrend, p26, p52)
   AttData <- AttMOMO::AttMOMO_estimationCut(country, StartWeek, EndWeek, groups, pooled, indicators, indicatorCuts, death_data, population_data, ET_data, lags, ptrend, p26, p52)
 
-  write.table(AttData, file = paste0(outdir, "/AttData_", paste(indicators, collapse = '_'), ".txt"), sep = ";", row.names = FALSE, col.names = TRUE)
+  write.table(AttData$AttData, file = paste0(outdir, "/AttData_", paste(indicators, collapse = '_'), ".txt"), sep = ";", row.names = FALSE, col.names = TRUE)
+  write.table(AttData$R2, file = paste0(outdir, "/R2_", paste(indicators, collapse = '_'), ".txt"), sep = ";", row.names = FALSE, col.names = TRUE)
 
   if (Rdata) {
     return(AttData)

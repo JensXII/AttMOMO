@@ -18,11 +18,12 @@
 #' @param p52 significance of year-sine be included (default = 0.10)
 #' @import data.table
 #' @import glm2
+#' @import stats
 #' @return data with weekly estimated means and variances
 #' @export
 AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = NULL, indicators, indicatorCuts, death_data, population_data = NULL, ET_data,
                                   lags = 3, ptrend = 0.05, p26 = 0.05, p52 = 0.10) {
-  group <- ET <- summer <- winter <- EB <- EAB <- deaths <- VEB <- EET <- VEET <- VEAB <- wk <- . <- anova <- glm <- median <- residuals <- df.residual <- predict.glm <- quasipoisson <- N <- NULL
+  group <- ET <- summer <- winter <- EB <- EAB <- deaths <- VEB <- EET <- VEET <- VEAB <- wk <- . <- anova <- glm <- median <- residuals <- df.residual <- predict.glm <- quasipoisson <- N <- update <- NULL
 
   # country <- "Denmark"
   # StartWeek <- '2017-W38'
@@ -203,6 +204,8 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
   # non-baseline parameters
   parm <- paste(grep("_d[0-9]", names(AttData), value = TRUE), collapse = " + ")
 
+  R2 <- NULL
+
   for (g in groups) {
 
     cat(paste("### Group", g, "###\n"))
@@ -246,6 +249,12 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
     m <- glm2::glm2(f, quasipoisson(identity), data = AttData[group == g,], weights = N)
 
     print(summary(m))
+
+    m.null <- stats::update(m, deaths/N ~ 1)
+    R2 <- rbind(R2,
+                cbind(country, group = g, R2 = 1 - m$deviance/m.null$deviance, adjR2 = 1 - (m.null$df.residual/m$df.residual)*(m$deviance/m.null$deviance))
+    )
+    rm(m.null)
 
     # Predictions -------------------------------------------------------------
 
@@ -350,5 +359,5 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
   AttData <- cbind(country, AttData)
   AttData <- AttData[order(country, group, ISOweek)]
 
-  return(AttData)
+  return(list(AttData = AttData, R2 = R2))
 }

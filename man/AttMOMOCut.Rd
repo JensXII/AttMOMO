@@ -49,10 +49,10 @@ One file for each must be available: IndicatorName_data.txt}
 
 \item{p52}{significance of year-sine be included (default = 0.10)}
 
-\item{Rdata}{Return data to R (TRUE/FALSE - default FALSE).}
+\item{Rdata}{Return list with data and R-square values to R (TRUE/FALSE - default FALSE).}
 }
 \value{
-Write a ;-separated file AttData_indicators.txt in output directory/output.
+Write two ;-separated files AttData_indicators.txt and R2_indicators.txt in wdir/output.
 }
 \description{
 Run AttMOMO base and baseline adjusted models.
