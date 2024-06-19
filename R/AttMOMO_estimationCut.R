@@ -252,7 +252,7 @@ AttMOMO_estimationCut <- function(country, StartWeek, EndWeek, groups, pooled = 
 
     m.null <- stats::update(m, deaths/N ~ 1)
     R2 <- rbind(R2,
-                cbind(country, group = g, R2 = 1 - m$deviance/m.null$deviance, adjR2 = 1 - (m.null$df.residual/m$df.residual)*(m$deviance/m.null$deviance))
+                cbind(country, group = g, R2 = 1 - m$deviance/m.null$deviance, adjR2 = 1 - (m.null$df.residual/m$df.residual)*(m$deviance/m.null$deviance), model = f)
     )
     rm(m.null)
 

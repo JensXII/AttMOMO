@@ -36,6 +36,6 @@ Removed library-statements.
 ## AttMOMO 2021.03.05
 AttMOMO available as a R-package.
 ```{r eval = FALSE}
-devtools::install_git("JensXII/AttMOMO")
+devtools::install_github("JensXII/AttMOMO")
 ```
 
